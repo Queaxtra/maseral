@@ -10,6 +10,7 @@
     import { movieDetails } from "$lib/movies";
     import { goto } from "$app/navigation";
     import { removeFavorite } from "$lib/favorite";
+    import { getSeriesDetails } from "$lib/series";
 
     let userData: any = null;
     let loading = false;
@@ -31,15 +32,23 @@
         avatar: null as File | null
     };
 
-    async function loadFavoriteMovies() {
+    async function loadFavoriteContent() {
         if (!userData) return;
         
         loadingFavorites = true;
         try {
             const favorites = await getUserFavorites(userData.id);
             
-            const moviePromises = favorites.map(fav => movieDetails(fav.filmId));
-            favoriteMovies = await Promise.all(moviePromises);
+            const contentPromises = favorites.map(async fav => {
+                if (fav.type === 'series') {
+                    const series = await getSeriesDetails(fav.filmId);
+                    return { ...series, contentType: 'series' };
+                } else {
+                    const movie = await movieDetails(fav.filmId);
+                    return { ...movie, contentType: 'movie' };
+                }
+            });
+            favoriteMovies = await Promise.all(contentPromises);
         } catch (error) {
             console.error("Failed to load favorites:", error);
         } finally {
@@ -123,7 +132,7 @@
     });
 
     $: if (activeTab === 'favorites' && userData) {
-        loadFavoriteMovies();
+        loadFavoriteContent();
     }
 </script>
 
@@ -312,20 +321,24 @@
                     </div>
                 {:else}
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-6" transition:fade={{ duration: 300 }}>
-                    {#each favoriteMovies as movie}
+                    {#each favoriteMovies as content}
                     <div class="relative h-[300px] rounded-lg overflow-hidden">
-                        <img src={`https://image.tmdb.org/t/p/original${movie.backdrop_path}`} alt={movie.title} class="w-full h-full object-cover brightness-50" />
+                        <img src={`https://image.tmdb.org/t/p/original${content.backdrop_path}`} alt={content.title || content.name} class="w-full h-full object-cover brightness-50" />
                         <div class="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
                         <div class="absolute bottom-0 p-4 w-full">
-                            <h3 class="text-xl font-bold text-white">{movie.title}</h3>
+                            <h3 class="text-xl font-bold text-white">{content.title || content.name}</h3>
                             <div class="flex items-center gap-3 text-sm mt-2">
-                                <span class="opacity-80">{new Date(movie.release_date).getFullYear()}</span>
+                                <span class="opacity-80">{new Date(content.release_date || content.first_air_date).getFullYear()}</span>
                                 <span class="opacity-50">•</span>
-                                <span class="opacity-80"><i class="ri-heart-fill"></i> {movie.vote_average.toFixed(1)}</span>
+                                <span class="opacity-80"><i class="ri-heart-fill"></i> {content.vote_average.toFixed(1)}</span>
+                                <span class="opacity-50">•</span>
+                                <span class="opacity-80">{content.contentType === 'series' ? 'Series' : 'Movie'}</span>
                             </div>
                             <div class="flex items-center gap-3 mt-4">
-                                <button on:click={() => goto(`/movie/${movie.id}`)} class="bg-white text-black px-4 py-2 rounded-lg">Watch Movie</button>
-                                <button on:click={() => handleRemoveFavorite(movie.id)} class="bg-red-500 text-white px-4 py-2 rounded-lg">
+                                <button on:click={() => goto(`/${content.contentType === 'series' ? 'series' : 'movie'}/${content.id}`)} class="bg-white text-black px-4 py-2 rounded-lg">
+                                    Watch {content.contentType === 'series' ? 'Series' : 'Movie'}
+                                </button>
+                                <button on:click={() => handleRemoveFavorite(content.id)} class="bg-red-500 text-white px-4 py-2 rounded-lg">
                                     <i class="ri-heart-fill"></i>
                                 </button>
                             </div>

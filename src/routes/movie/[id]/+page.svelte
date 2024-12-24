@@ -35,7 +35,7 @@
                 await removeFavorite(movieId, userId);
                 isFavorited = false;
             } else {
-                await addFavorite(movieId, userId);
+                await addFavorite(movieId, userId, 'movie');
                 isFavorited = true;
             }
         } catch (error) {

@@ -3,13 +3,15 @@ import db from "./db";
 interface FavoriteMovieData {
     filmId: string;
     userId: string;
+    type?: string;
 }
 
-export async function addFavorite(filmId: string, userId: string) {
+export async function addFavorite(filmId: string, userId: string, type?: string) {
     try {
         const data: FavoriteMovieData = {
             filmId,
-            userId
+            userId,
+            type
         };
         const record = await db.collection('favorites').create(data);
         return record;

@@ -105,7 +105,6 @@
                 <div class="flex items-center gap-3 mt-4">
                     <button on:click={() => goto(`/series/${show.id}`)} class="bg-white text-black px-4 py-2 rounded-lg">Watch Series</button>
                     <button on:click={() => openModal(show)} class="bg-white text-black px-4 py-2 rounded-lg"><i class="ri-information-fill"></i></button>
-                    <button class="bg-white text-black px-4 py-2 rounded-lg opacity-50 cursor-not-allowed"><i class="ri-heart-fill"></i></button>
                 </div>
             </div>
         </div>

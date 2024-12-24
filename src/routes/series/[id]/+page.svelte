@@ -4,12 +4,42 @@
     import { fade } from "svelte/transition";
     import { getSeriesDetails, getSimilarSeries } from "$lib/series";
     import { goto } from "$app/navigation";
+    import { isUserLoggedIn } from "$lib/user";
+    import { addFavorite, removeFavorite, isMovieFavorited } from "$lib/favorite";
+    import db from "$lib/db";
 
     let series: any = null;
     let similarSeries: any[] = [];
     let loading = true;
     let currentPage = 1;
     const seriesId = $page.params.id;
+    let userLoggedIn = false;
+    let isFavorited = false;
+
+    onMount(async () => {
+        userLoggedIn = await isUserLoggedIn();
+        if (userLoggedIn) {
+            const userId = db.authStore?.model?.id;
+            isFavorited = await isMovieFavorited(seriesId, userId);
+        }
+    });
+
+    async function toggleFavorite() {
+        if (!userLoggedIn) return;
+        const userId = db.authStore?.model?.id;
+        
+        try {
+            if (isFavorited) {
+                await removeFavorite(seriesId, userId);
+                isFavorited = false;
+            } else {
+                await addFavorite(seriesId, userId, 'series');
+                isFavorited = true;
+            }
+        } catch (error) {
+            console.error('Failed to toggle favorite:', error);
+        }
+    }
     
     async function loadSimilarSeries(page: number) {
         const data = await getSimilarSeries(seriesId, page);
@@ -69,7 +99,13 @@
                 <button on:click={() => goto("/")} class="bg-white text-black px-6 py-3 rounded-lg">
                     <i class="ri-arrow-left-line mr-2"></i> Back
                 </button>
+                {#if userLoggedIn}
+                <button on:click={toggleFavorite} class="px-6 py-3 rounded-lg transition-colors {isFavorited ? 'bg-red-500 text-white' : 'bg-white text-black'}">
+                    <i class="ri-heart-{isFavorited ? 'fill' : 'line'}"></i>
+                </button>
+                {:else}
                 <button disabled class="bg-white text-black px-6 py-3 rounded-lg opacity-50 cursor-not-allowed"><i class="ri-heart-fill"></i></button>
+                {/if}
             </div>
         </div>
     </div>
