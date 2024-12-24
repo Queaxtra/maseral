@@ -1,4 +1,5 @@
 <script lang="ts">
+    import Footer from "../../../components/Footer.svelte";
     import { onMount } from "svelte";
     import { page } from "$app/stores";
     import { fade } from "svelte/transition";
@@ -7,6 +8,7 @@
     import { isUserLoggedIn } from "$lib/user";
     import { addFavorite, removeFavorite, isMovieFavorited } from "$lib/favorite";
     import db from "$lib/db";
+    import { getSeriesActors } from "$lib/actors";
 
     let series: any = null;
     let similarSeries: any[] = [];
@@ -15,6 +17,7 @@
     const seriesId = $page.params.id;
     let userLoggedIn = false;
     let isFavorited = false;
+    let actors: any[] = [];
 
     onMount(async () => {
         userLoggedIn = await isUserLoggedIn();
@@ -63,10 +66,12 @@
             const seriesId = $page.params.id;
             Promise.all([
                 getSeriesDetails(seriesId),
-                getSimilarSeries(seriesId, currentPage)
-            ]).then(([seriesData, similarData]) => {
+                getSimilarSeries(seriesId, currentPage),
+                getSeriesActors(seriesId)
+            ]).then(([seriesData, similarData, actorsData]) => {
                 series = seriesData;
                 similarSeries = similarData;
+                actors = actorsData.slice(0, 12);
                 loading = false;
             });
         }
@@ -159,6 +164,21 @@
     </div>
 
     <div class="max-w-7xl mx-auto py-12 px-4">
+        <h2 class="text-2xl font-bold mb-6">Actors</h2>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+            {#each actors as actor}
+            <div class="bg-cGray rounded-lg overflow-hidden">
+                <img src={actor.profile_path ? `https://image.tmdb.org/t/p/w500${actor.profile_path}` : 'https://via.placeholder.com/500x750'} alt={actor.name} class="w-full h-[250px] object-cover" />
+                <div class="p-4">
+                    <h3 class="font-bold text-sm line-clamp-1">{actor.name}</h3>
+                    <p class="text-sm opacity-50 mt-1 line-clamp-1">{actor.character}</p>
+                </div>
+            </div>
+            {/each}
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto py-12 px-4">
         <div class="flex items-center justify-between mb-6">
             <h2 class="text-2xl font-bold">Similar Series</h2>
             <div class="flex gap-4">
@@ -175,8 +195,8 @@
 
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
             {#each similarSeries as similar}
-            <div class="bg-cGray rounded-lg overflow-hidden cursor-pointer" on:click={() => goto(`/movie/${similar.id}`)}>
-                <img src={`https://image.tmdb.org/t/p/w500${similar.poster_path}`} alt={similar.title} class="w-full h-[250px] object-cover" />
+            <div class="bg-cGray rounded-lg overflow-hidden cursor-pointer" on:click={() => goto(`/series/${similar.id}`)}>
+                <img src={similar.poster_path ? `https://image.tmdb.org/t/p/w500${similar.poster_path}` : 'https://via.placeholder.com/500x750'} alt={similar.title} class="w-full h-[250px] object-cover" />
                 <div class="p-4">
                     <h3 class="font-bold text-sm line-clamp-1">{similar.title || "No Titles"}</h3>
                     <div class="flex items-center gap-2 mt-2 text-sm opacity-50">
@@ -201,3 +221,5 @@
     <i class="ri-loader-4-line animate-spin text-4xl"></i>
 </div>
 {/if}
+
+<Footer />

@@ -1,4 +1,5 @@
 <script lang="ts">
+    import Footer from "../../../components/Footer.svelte";
     import { onMount } from "svelte";
     import { page } from "$app/stores";
     import { fade } from "svelte/transition";
@@ -219,3 +220,5 @@
     <i class="ri-loader-4-line animate-spin text-4xl"></i>
 </div>
 {/if}
+
+<Footer />

@@ -21,3 +21,15 @@ export const getMovieActors = async (movieId: string) => {
     const data = await response.json();
     return data.cast;
 };
+
+export const getSeriesActors = async (seriesId: string) => {
+    const response = await fetch(`https://api.themoviedb.org/3/tv/${seriesId}/credits?language=en-US`, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${import.meta.env.VITE_APP_APIKEY}`
+        }
+    });
+    const data = await response.json();
+    return data.cast;
+};
